@@ -6,11 +6,19 @@ let
     haskell = super.haskell // {
       packages = super.haskell.packages // {
         "${compiler}" = super.haskell.packages.${compiler}.override {
-          overrides = hself: hsuper: {};
+          overrides = hself: hsuper: with self.haskell.lib; {
+            ede = appendPatch hsuper.ede ./patches/ede-0.2.9-ghc882.patch;
+            text-format = markUnbroken (doJailbreak hsuper.text-format);
+            trifecta =
+              appendPatch
+                (doJailbreak ((hself.callHackage "trifecta" "2" {})))
+                ./patches/trifecta-2-ghc882.patch;
+          };
         };
       };
     };
   };
+
   pkgs = (
     import sources.unstable {
       overlays = [
@@ -18,6 +26,22 @@ let
       ];
     }
   );
-  tag = pkgs.haskellPackages.callCabal2nix "tag" (pkgs.nix-gitignore.gitignoreFilterPure ./.) {};
+
+  inherit (pkgs.haskellPackages)
+    callCabal2nix
+    shellFor
+    ;
+  inherit (pkgs)
+    lib
+    nix-gitignore
+    ;
+
+  tag = callCabal2nix "tag" (nix-gitignore.gitignoreSource [] ./.) {};
 in
-tag
+if lib.inNixShell then
+  shellFor {
+    packages = _: [ tag ];
+    withHoogle = true;
+  }
+else
+  tag

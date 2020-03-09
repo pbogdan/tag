@@ -8,18 +8,18 @@ build-type:         Simple
 extra-source-files: CHANGELOG.md
 
 library
-    exposed-modules:
-        Tag
+    exposed-modules:    Tag
     hs-source-dirs:     src
     default-language:   Haskell2010
     default-extensions: OverloadedStrings NoImplicitPrelude ScopedTypeVariables
     ghc-options:        -Wall
     build-depends:
         base >=4.13,
+        ede -any,
         htaglib -any,
+        optparse-applicative -any,
         protolude -any,
-        text -any,
-        optparse-applicative
+        text -any
 
 executable tag
     main-is:            Main.hs
@@ -27,6 +27,7 @@ executable tag
     default-language:   Haskell2010
     default-extensions: OverloadedStrings NoImplicitPrelude ScopedTypeVariables
     ghc-options:        -Wall
-    build-depends:      base >=4.13
-                      , protolude
-                      , tag
+    build-depends:
+        base >=4.13,
+        protolude -any,
+        tag -any
