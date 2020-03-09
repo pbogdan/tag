@@ -1,0 +1,32 @@
+cabal-version:      >=1.10
+name:               tag
+version:            0.1.0.0
+license-file:       LICENSE
+maintainer:         ppbogdan@gmail.com
+author:             Piotr Bogdan
+build-type:         Simple
+extra-source-files: CHANGELOG.md
+
+library
+    exposed-modules:
+        Tag
+    hs-source-dirs:     src
+    default-language:   Haskell2010
+    default-extensions: OverloadedStrings NoImplicitPrelude ScopedTypeVariables
+    ghc-options:        -Wall
+    build-depends:
+        base >=4.13,
+        htaglib -any,
+        protolude -any,
+        text -any,
+        optparse-applicative
+
+executable tag
+    main-is:            Main.hs
+    hs-source-dirs:     app
+    default-language:   Haskell2010
+    default-extensions: OverloadedStrings NoImplicitPrelude ScopedTypeVariables
+    ghc-options:        -Wall
+    build-depends:      base >=4.13
+                      , protolude
+                      , tag
