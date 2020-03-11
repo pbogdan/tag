@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -13,9 +14,11 @@ where
 import           Protolude               hiding ( option )
 
 import           Data.Aeson              hiding ( Options(..) )
-import           System.Directory               ( renameFile )
+import           Data.String                    ( String )
+import qualified Data.Text                     as Text
 import           Options.Applicative
 import           Sound.HTagLib
+import           System.Directory               ( renameFile )
 import           Text.EDE
 
 data AudioTrack = AudioTrack
@@ -50,6 +53,28 @@ audioTrackGetter =
     <*> yearGetter
     <*> trackNumberGetter
 
+displayAudioTrack :: AudioTrack -> Text
+displayAudioTrack AudioTrack {..} =
+  let keys = map
+        (padString 20 ' ' . (<> ":"))
+        ["Artist", "Title", "Album", "Comment", "Genre", "Year", "Track number"]
+      vals =
+          [ unArtist audioTrackArtist
+          , unTitle audioTrackTitle
+          , unAlbum audioTrackAlbum
+          , unComment audioTrackComment
+          , unGenre audioTrackGenre
+          , fromMaybe "" (show . unYear <$> audioTrackYear)
+          , fromMaybe "" (show . unTrackNumber <$> audioTrackTrack)
+          ]
+  in  Text.intercalate "\n" . zipWith (<>) keys $ vals
+ where
+  padString
+    :: (StringConv a String, StringConv String a) => Int -> Char -> a -> a
+  padString n x xs
+    | length (toS xs :: String) >= n = xs
+    | otherwise = toS (toS xs ++ replicate (n - length (toS xs :: String)) x)
+
 parseFormat :: AudioTrack -> Text -> Either Text Text
 parseFormat track format =
   let template = eitherParse . toS $ format
@@ -57,14 +82,16 @@ parseFormat track format =
       rResult  = bimap toS toS . (flip eitherRender env =<<) $ template
   in  rResult
 
-read :: Text -> FilePath -> IO ()
-read format path = do
+read :: Maybe Text -> FilePath -> IO ()
+read mFormat path = do
   track <- getTags path audioTrackGetter
-  case parseFormat track format of
-    Right formatted -> putText formatted
-    Left  err       -> do
-      putErrText $ "Parsing template failed" <> err
-      exitFailure
+  case mFormat of
+    Just format -> case parseFormat track format of
+      Right formatted -> putText formatted
+      Left  err       -> do
+        putErrText $ "Parsing template failed" <> err
+        exitFailure
+    Nothing -> putText . displayAudioTrack $ track
 
 rename :: Text -> FilePath -> IO ()
 rename format path = do
@@ -82,7 +109,7 @@ write updates path = setTags path Nothing (composeUpdates updates)
 data Options = Options Command deriving (Eq, Show)
 
 data Command =
-  Read Text FilePath
+  Read (Maybe Text) FilePath
   | Write [Update] FilePath
   | Rename Text FilePath
   deriving (Eq, Show)
@@ -136,7 +163,9 @@ parseCommand =
 
 parseReadCommand :: Parser Command
 parseReadCommand =
-  Read <$> argument str (metavar "format") <*> argument str (metavar "file")
+  Read
+    <$> optional (strOption (long "format" <> short 'f' <> metavar "format"))
+    <*> argument str (metavar "file")
 
 parseWriteCommand :: Parser Command
 parseWriteCommand =
@@ -176,7 +205,9 @@ parseWriteCommand =
 
 parseRenameCommand :: Parser Command
 parseRenameCommand =
-  Rename <$> argument str (metavar "format") <*> argument str (metavar "file")
+  Rename
+    <$> strOption (long "format" <> short 'f' <> metavar "format")
+    <*> argument str (metavar "file")
 
 processOptions :: IO Command
 processOptions = do
