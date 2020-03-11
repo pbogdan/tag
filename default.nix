@@ -31,6 +31,9 @@ let
     callCabal2nix
     shellFor
     ;
+  inherit (pkgs.haskell.lib)
+    justStaticExecutables
+    ;
   inherit (pkgs)
     lib
     nix-gitignore
@@ -44,4 +47,4 @@ if lib.inNixShell then
     withHoogle = true;
   }
 else
-  tag
+  justStaticExecutables tag
