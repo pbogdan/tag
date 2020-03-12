@@ -14,12 +14,24 @@ where
 import           Protolude               hiding ( option )
 
 import           Data.Aeson              hiding ( Options(..) )
+import           Data.Char                      ( toUpper )
+import           Data.HashMap.Strict            ( HashMap )
+import qualified Data.HashMap.Strict           as HashMap
 import           Data.String                    ( String )
 import qualified Data.Text                     as Text
 import           Options.Applicative
 import           Sound.HTagLib
 import           System.Directory               ( renameFile )
 import           Text.EDE
+import           Text.EDE.Filters
+
+-- | Convert a word to title case by capitalising the first letter
+-- capitalise :: IsString a => a -> a
+capitalise :: (StringConv a String, StringConv String a) => a -> a
+capitalise = toS . go . toS
+ where
+  go []       = []
+  go (c : cs) = toUpper c : cs
 
 data AudioTrack = AudioTrack
   { audioTrackTitle   :: Title
@@ -64,8 +76,8 @@ displayAudioTrack AudioTrack {..} =
           , unAlbum audioTrackAlbum
           , unComment audioTrackComment
           , unGenre audioTrackGenre
-          , fromMaybe "" (show . unYear <$> audioTrackYear)
-          , fromMaybe "" (show . unTrackNumber <$> audioTrackTrack)
+          , maybe "" (show . unYear)        audioTrackYear
+          , maybe "" (show . unTrackNumber) audioTrackTrack
           ]
   in  Text.intercalate "\n" . zipWith (<>) keys $ vals
  where
@@ -77,10 +89,16 @@ displayAudioTrack AudioTrack {..} =
 
 parseFormat :: AudioTrack -> Text -> Either Text Text
 parseFormat track format =
-  let template = eitherParse . toS $ format
-      env      = maybe mempty identity (fromValue . toJSON $ track)
-      rResult  = bimap toS toS . (flip eitherRender env =<<) $ template
-  in  rResult
+  let
+    template = eitherParse . toS $ format
+    env      = maybe mempty identity (fromValue . toJSON $ track)
+    filters :: HashMap Id Term
+    filters = HashMap.fromList
+      [("capitalise", quote "capitalise" 0 (capitalise :: Text -> Text))]
+    rResult =
+      bimap toS toS . (flip (eitherRenderWith filters) env =<<) $ template
+  in
+    rResult
 
 read :: Maybe Text -> FilePath -> IO ()
 read mFormat path = do

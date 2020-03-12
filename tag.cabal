@@ -21,6 +21,7 @@ library
         htaglib -any,
         optparse-applicative -any,
         protolude -any,
+        unordered-containers -any,
         text -any
 
 executable tag
