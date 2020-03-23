@@ -13,6 +13,7 @@ where
 
 import           Protolude               hiding ( option )
 
+import           Control.Lens                   ( view )
 import           Data.Aeson              hiding ( Options(..) )
 import           Data.Char                      ( toUpper )
 import           Data.HashMap.Strict            ( HashMap )
@@ -22,6 +23,7 @@ import qualified Data.Text                     as Text
 import           Options.Applicative
 import           Sound.HTagLib
 import           System.Directory               ( renameFile )
+import           System.FilePath.Lens           ( filename )
 import           Text.EDE
 import           Text.EDE.Filters
 
@@ -87,11 +89,14 @@ displayAudioTrack AudioTrack {..} =
     | length (toS xs :: String) >= n = xs
     | otherwise = toS (toS xs ++ replicate (n - length (toS xs :: String)) x)
 
-parseFormat :: AudioTrack -> Text -> Either Text Text
-parseFormat track format =
+parseFormat :: AudioTrack -> Text -> FilePath -> Either Text Text
+parseFormat track format path =
   let
     template = eitherParse . toS $ format
-    env      = maybe mempty identity (fromValue . toJSON $ track)
+    env      = maybe
+      mempty
+      (HashMap.insert "filename" (String . toS . view filename $ path))
+      (fromValue . toJSON $ track)
     filters :: HashMap Id Term
     filters = HashMap.fromList
       [("capitalise", quote "capitalise" 0 (capitalise :: Text -> Text))]
@@ -104,7 +109,7 @@ read :: Maybe Text -> FilePath -> IO ()
 read mFormat path = do
   track <- getTags path audioTrackGetter
   case mFormat of
-    Just format -> case parseFormat track format of
+    Just format -> case parseFormat track format path of
       Right formatted -> putText formatted
       Left  err       -> do
         putErrText $ "Parsing template failed" <> err
@@ -114,7 +119,7 @@ read mFormat path = do
 rename :: Text -> FilePath -> IO ()
 rename format path = do
   track <- getTags path audioTrackGetter
-  case parseFormat track format of
+  case parseFormat track format path of
     Right formatted -> renameFile path (toS formatted)
     Left  err       -> do
       putErrText $ "Parsing template failed" <> err

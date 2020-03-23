@@ -19,6 +19,7 @@ library
         directory -any,
         ede -any,
         htaglib -any,
+        lens -any,
         optparse-applicative -any,
         protolude -any,
         unordered-containers -any,
