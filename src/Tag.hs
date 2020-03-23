@@ -147,10 +147,11 @@ data Update =
   | Track (Maybe TrackNumber)
   deriving (Eq, Show)
 
--- Important note - this composes the updates however in reverse order thanks to Dual. Under the
--- default order should duplicate setters be combined the first one will "win". This however makes
--- less sense when the updates are fed from CLI where it makes more sense for the last entry to
--- win. For example --artist foo --artist bar should set the artist to bar.
+-- Important note - this composes the updates however the updates are composed in reverse order
+-- thanks to the Dual monoid. Under the default order, should duplicate setters be combined, the
+-- first one will "win". This however makes less sense when the updates are fed from CLI where it
+-- makes more sense for the last entry to win. For example --artist foo --artist bar should set the
+-- artist to bar.
 composeUpdates :: [Update] -> TagSetter
 composeUpdates = getDual . foldMap go
  where
