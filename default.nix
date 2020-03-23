@@ -41,10 +41,4 @@ let
 
   tag = callCabal2nix "tag" (nix-gitignore.gitignoreSource [] ./.) {};
 in
-if lib.inNixShell then
-  shellFor {
-    packages = _: [ tag ];
-    withHoogle = true;
-  }
-else
   justStaticExecutables tag
