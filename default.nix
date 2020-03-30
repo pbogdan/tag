@@ -1,5 +1,5 @@
 { sources ? (import ./nix/sources.nix)
-, compiler ? "ghc882"
+, compiler ? "ghc883"
 }:
 let
   overlay = self: super: {
