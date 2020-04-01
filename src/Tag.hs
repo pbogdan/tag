@@ -93,13 +93,14 @@ parseFormat :: AudioTrack -> Text -> FilePath -> Either Text Text
 parseFormat track format path =
   let
     template = eitherParse . toS $ format
-    env      = maybe
-      mempty
-      (HashMap.insert "filename" (String . toS . view filename $ path))
-      (fromValue . toJSON $ track)
     filters :: HashMap Id Term
     filters = HashMap.fromList
       [("capitalise", quote "capitalise" 0 (capitalise :: Text -> Text))]
+    vars = HashMap.fromList
+      [ ("filename", String . toS . view filename $ path)
+      , ("filepath", String . toS $ path)
+      ]
+    env = maybe mempty (HashMap.union vars) (fromValue . toJSON $ track)
     rResult =
       bimap toS toS . (flip (eitherRenderWith filters) env =<<) $ template
   in
