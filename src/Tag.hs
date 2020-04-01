@@ -126,15 +126,16 @@ rename format path = do
       putErrText $ "Parsing template failed" <> err
       exitFailure
 
-write :: [Update] -> FilePath -> IO ()
-write updates path = setTags path Nothing (composeUpdates updates)
+write :: [Update] -> [FilePath] -> IO ()
+write updates paths =
+  for_ paths $ \path -> setTags path Nothing (composeUpdates updates)
 
 {-# ANN Options ("HLint: ignore Use newtype instead of data" :: Text) #-}
 data Options = Options Command deriving (Eq, Show)
 
 data Command =
   Read (Maybe Text) [FilePath]
-  | Write [Update] FilePath
+  | Write [Update] [FilePath]
   | Rename Text FilePath
   deriving (Eq, Show)
 
@@ -204,7 +205,7 @@ parseWriteCommand =
           <|> parseYearUpdate
           <|> parseTrackUpdate
           )
-    <*> argument str (metavar "file")
+    <*> some (argument str (metavar "file"))
  where
   parseArtistUpdate = Artist <$> strOption
     (long "artist" <> short 'a' <> metavar "artist" <> help "Name of the artist"
