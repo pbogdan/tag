@@ -99,6 +99,7 @@ parseFormat track format path =
     vars = HashMap.fromList
       [ ("filename", String . toS . view filename $ path)
       , ("filepath", String . toS $ path)
+      , ("all"     , String . displayAudioTrack $ track)
       ]
     env = maybe mempty (HashMap.union vars) (fromValue . toJSON $ track)
     rResult =
