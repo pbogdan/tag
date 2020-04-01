@@ -117,14 +117,15 @@ read mFormat paths = do
           exitFailure
       Nothing -> putText . displayAudioTrack $ track
 
-rename :: Text -> FilePath -> IO ()
-rename format path = do
-  track <- getTags path audioTrackGetter
-  case parseFormat track format path of
-    Right formatted -> renameFile path (toS formatted)
-    Left  err       -> do
-      putErrText $ "Parsing template failed" <> err
-      exitFailure
+rename :: Text -> [FilePath] -> IO ()
+rename format paths = do
+  for_ paths $ \path -> do
+    track <- getTags path audioTrackGetter
+    case parseFormat track format path of
+      Right formatted -> renameFile path (toS formatted)
+      Left  err       -> do
+        putErrText $ "Parsing template failed" <> err
+        exitFailure
 
 write :: [Update] -> [FilePath] -> IO ()
 write updates paths =
@@ -136,7 +137,7 @@ data Options = Options Command deriving (Eq, Show)
 data Command =
   Read (Maybe Text) [FilePath]
   | Write [Update] [FilePath]
-  | Rename Text FilePath
+  | Rename Text [FilePath]
   deriving (Eq, Show)
 
 data Update =
@@ -231,9 +232,8 @@ parseWriteCommand =
 
 parseRenameCommand :: Parser Command
 parseRenameCommand =
-  Rename
-    <$> strOption (long "format" <> short 'f' <> metavar "format")
-    <*> argument str (metavar "file")
+  Rename <$> strOption (long "format" <> short 'f' <> metavar "format") <*> some
+    (argument str (metavar "file"))
 
 processOptions :: IO Command
 processOptions = do

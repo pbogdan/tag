@@ -10,4 +10,4 @@ main = do
   case command of
     Read   format  paths -> read format paths
     Write  updates paths -> write updates paths
-    Rename format  path  -> rename format path
+    Rename format  paths -> rename format paths
