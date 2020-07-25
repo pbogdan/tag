@@ -1,7 +1,12 @@
 let
-  tag = (import ./default.nix {});
   sources = import ./nix/sources.nix;
-  pkgs = (import sources.unstable {});
+in
+{ pkgs ? import sources.unstable { }
+}:
+let
+  tag = import ./default.nix {
+    inherit pkgs;
+  };
 in
 pkgs.haskellPackages.shellFor {
   packages = _: [
