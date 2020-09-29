@@ -1,10 +1,9 @@
+name: Update flake inputs
+
 on:
   schedule:
-    - cron: "10 18 * * *"
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
+    - cron: '0 4 * * *'
 
-name: Update flake inputs
 jobs:
   release:
     name: Update flake inputs
