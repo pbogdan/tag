@@ -1,0 +1,25 @@
+on:
+ schedule:
+   - cron: 0 18 * * *
+ pull_request:
+   types: [opened, synchronize, reopened, closed]
+
+name: Update packages
+jobs:
+ release:
+   name: Update npm packages
+   runs-on: ubuntu-latest
+   steps:
+     - uses: cachix/install-nix-action@v8
+     - name: Install nixFlakes
+       run: nix-env -iA nixpkgs.nixFlakes
+     - name: Update flake inputs
+       uses: technote-space/create-pr-action@v2
+       with:
+         EXECUTE_COMMANDS: |
+           nix flake update --recreate-lock-file
+         COMMIT_MESSAGE: 'flake: update inputs'
+         COMMIT_NAME: 'GitHub Actions'
+         COMMIT_EMAIL: 'noreply@github.com'
+         PR_BRANCH_NAME: 'flake-update-inputs-${PR_ID}'
+         PR_TITLE: 'flake: update inputs'
