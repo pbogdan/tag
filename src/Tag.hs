@@ -15,7 +15,6 @@ import           Protolude               hiding ( option )
 
 import           Control.Lens                   ( view )
 import           Data.Aeson              hiding ( Options(..) )
-import           Data.Char                      ( toUpper )
 import           Data.HashMap.Strict            ( HashMap )
 import qualified Data.HashMap.Strict           as HashMap
 import           Data.String                    ( String )
@@ -29,7 +28,7 @@ import           Text.EDE.Filters
 
 -- | Convert a word to title case by capitalising the first letter
 -- capitalise :: IsString a => a -> a
-capitalise :: (StringConv a String, StringConv String a) => a -> a
+capitalise :: (ConvertText a String, ConvertText String a) => a -> a
 capitalise = toS . go . toS
  where
   go []       = []
@@ -84,7 +83,7 @@ displayAudioTrack AudioTrack {..} =
   in  Text.intercalate "\n" . zipWith (<>) keys $ vals
  where
   padString
-    :: (StringConv a String, StringConv String a) => Int -> Char -> a -> a
+    :: (ConvertText a String, ConvertText String a) => Int -> Char -> a -> a
   padString n x xs
     | length (toS xs :: String) >= n = xs
     | otherwise = toS (toS xs ++ replicate (n - length (toS xs :: String)) x)
@@ -92,7 +91,7 @@ displayAudioTrack AudioTrack {..} =
 parseFormat :: AudioTrack -> Text -> FilePath -> Either Text Text
 parseFormat track format path =
   let
-    template = eitherParse . toS $ format
+    template = eitherParse . encodeUtf8 $ format
     filters :: HashMap Id Term
     filters = HashMap.fromList
       [("capitalise", quote "capitalise" 0 (capitalise :: Text -> Text))]

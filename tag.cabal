@@ -21,7 +21,7 @@ library
         htaglib -any,
         lens -any,
         optparse-applicative -any,
-        protolude -any,
+        protolude >= 0.3.0,
         unordered-containers -any,
         text -any
 
@@ -33,5 +33,5 @@ executable tag
     ghc-options:        -Wall
     build-depends:
         base >=4.13,
-        protolude -any,
+        protolude >= 0.3.0,
         tag -any
