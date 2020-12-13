@@ -6,16 +6,16 @@ in
 let
   hspkgs = pkgs.haskellPackages.override {
     overrides = hself: hsuper: with pkgs.haskell.lib; {
-      ede = overrideCabal hsuper.ede (
-        drv: {
-          src = pkgs.fetchFromGitHub {
-            owner = "brendanhay";
-            repo = "ede";
-            rev = "5e0373b8a8c83ff2078a938795e30ec8038d228c";
-            sha256 = "1lb0q289p6lrc65adlacdx8xy8hrvcywbf6np7rilqdvvnyvlbgs";
-          };
-        }
-      );
+      ede = dontCheck
+        (unmarkBroken (
+          overrideCabal hsuper.ede (
+            drv: {
+              postPatch = drv.postPatch or "" + ''
+                sed -i 91,104d ede.cabal
+              '';
+            }
+          )
+        ));
     };
   };
 
