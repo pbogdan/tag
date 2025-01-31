@@ -8,13 +8,7 @@ let
     overrides = hself: hsuper: with pkgs.haskell.lib; {
       ede = dontCheck
         (unmarkBroken (
-          overrideCabal hsuper.ede (
-            drv: {
-              postPatch = drv.postPatch or "" + ''
-                sed -i 91,104d ede.cabal
-              '';
-            }
-          )
+          hsuper.ede
         ));
     };
   };
